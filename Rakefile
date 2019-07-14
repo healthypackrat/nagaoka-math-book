@@ -115,13 +115,13 @@ class Track
   end
 end
 
-class DurationScanner
+class DurationParser
   def initialize(cache_path)
     @cache_path = cache_path
     @cache = @cache_path.exist? ? JSON.parse(@cache_path.read) : {}
   end
 
-  def scan(path)
+  def parse(path)
     path = path.to_s
 
     value = @cache[path]
@@ -130,7 +130,7 @@ class DurationScanner
 
     warn path
 
-    value = _scan(path)
+    value = _parse(path)
 
     @cache[path] = value
     @cache_path.write(JSON.pretty_generate(@cache))
@@ -140,7 +140,7 @@ class DurationScanner
 
   private
 
-  def _scan(path)
+  def _parse(path)
     info = IO.popen(['ffmpeg', '-i', path, :err => [:child, :out]], &:read)
 
     if /Duration: (\d+):(\d+):(\d+\.\d+)/ =~ info
@@ -155,7 +155,7 @@ class DurationScanner
   end
 end
 
-DURATION_SCANNER = DurationScanner.new(Pathname.new('durations.json'))
+DURATION_PARSER = DurationParser.new(Pathname.new('durations.json'))
 
 def build_book(book_dir)
   track_paths = Pathname.glob("#{book_dir}/**/*.mp3").sort
@@ -172,7 +172,7 @@ def build_book(book_dir)
         track_number: Integer($5),
         path: track_path,
         basename: basename,
-        duration: DURATION_SCANNER.scan(track_path)
+        duration: DURATION_PARSER.parse(track_path)
       }
     else
       raise "invalid basename: #{basename}"
