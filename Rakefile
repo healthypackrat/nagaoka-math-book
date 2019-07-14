@@ -6,8 +6,6 @@ require 'bundler/setup'
 
 require 'tilt'
 
-include ERB::Util
-
 module FormatHelper
   def hms(sec)
     min, sec = sec.divmod(60)
@@ -212,9 +210,13 @@ def build_book(book_dir)
   Book.new(chapters: chapters)
 end
 
+class RenderingContext
+  include ERB::Util
+end
+
 def erb(template_path, locals = {})
   template = Tilt.new(template_path, trim: '-')
-  template.render(nil, locals) { yield if block_given? }
+  template.render(RenderingContext.new, locals) { yield if block_given? }
 end
 
 task :default => :build
