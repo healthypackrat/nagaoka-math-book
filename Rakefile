@@ -32,6 +32,10 @@ class Book
   def to_s
     chapters.map(&:to_s).join("\n\n")
   end
+
+  def to_html
+    chapters.map(&:to_html).join("\n\n")
+  end
 end
 
 class Chapter
@@ -49,6 +53,12 @@ class Chapter
   def to_s
     sections.map do |section|
       section.to_s(self)
+    end.join("\n\n")
+  end
+
+  def to_html
+    sections.map do |section|
+      section.to_html(self)
     end.join("\n\n")
   end
 end
@@ -74,6 +84,14 @@ class Section
 
     lines.join("\n\n")
   end
+
+  def to_html(parent)
+    lines = ["<h3>#{parent.number}-#{number} (#{hms(duration)} / #{hms(parent.duration)})</h3>"]
+
+    lines += sub_sections.map(&:to_html)
+
+    lines.join("\n\n")
+  end
 end
 
 class SubSection
@@ -93,6 +111,18 @@ class SubSection
       track.to_s(self)
     end.join("\n")
   end
+
+  def to_html
+    lines = ['<ul>']
+
+    lines += tracks.map do |track|
+      track.to_html(self)
+    end
+
+    lines += ['</ul>']
+
+    lines.join("\n")
+  end
 end
 
 class Track
@@ -111,6 +141,14 @@ class Track
       "  * #{basename}  (#{hms(duration)})"
     else
       "  * #{basename}  (#{hms(duration)} / #{hms(parent.duration)})"
+    end
+  end
+
+  def to_html(parent)
+    if parent.tracks.one?
+      "<li>#{basename} (#{hms(duration)})</li>"
+    else
+      "<li>#{basename} (#{hms(duration)} / #{hms(parent.duration)})</li>"
     end
   end
 end
@@ -227,12 +265,10 @@ task :build do
   book_dirs.each do |book_dir|
     book = build_book(book_dir)
 
-    body = book.to_s
-
-    File.write("#{book_dir}.txt", body)
+    File.write("#{book_dir}.txt", book.to_s)
 
     html = erb('views/layout.erb', title: book_dir) do
-      erb('views/show.erb', body: body)
+      erb('views/show.erb', body: book.to_html)
     end
 
     File.write("#{book_dir}.html", html)
