@@ -262,19 +262,21 @@ task :default => :build
 task :build do
   book_dirs = %w[N_Math1A N_Math2B N_Math3]
 
+  brand = 'Nagaoka Math Book'
+
   book_dirs.each do |book_dir|
     book = build_book(book_dir)
 
     File.write("#{book_dir}.txt", book.to_s)
 
-    html = erb('views/layout.erb', title: book_dir) do
+    html = erb('views/layout.erb', title: book_dir, brand: brand) do
       erb('views/show.erb', body: book.to_html)
     end
 
     File.write("#{book_dir}.html", html)
   end
 
-  html = erb('views/layout.erb', title: 'Nagaoka Math Book') do
+  html = erb('views/layout.erb', title: brand, brand: brand) do
     paths = book_dirs.map {|v| "#{v}.html" }
     erb('views/index.erb', paths: paths)
   end
