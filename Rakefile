@@ -252,9 +252,9 @@ class RenderingContext
   include ERB::Util
 end
 
-def erb(template_path, locals = {})
+def erb(template_path, locals = {}, &block)
   template = Tilt.new(template_path, trim: '-')
-  template.render(RenderingContext.new, locals) { yield if block_given? }
+  template.render(RenderingContext.new, locals, &block)
 end
 
 task :default => :build
